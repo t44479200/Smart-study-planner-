@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Smart Study Planner</title>
+  <style>
+    :root {
+      --bg: #f5f7ff;
+      --panel: #ffffff;
+      --ink: #172033;
+      --muted: #778198;
+      --primary: #6558e8;
+      --primary-dark: #5144d4;
+      --soft: #eeecff;
+      --line: #e9ebf4;
+      --green: #159b72;
+      --orange: #ef9d39;
+      --shadow: 0 14px 40px rgba(32, 38, 75, .07);
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--ink);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+    button, input, select { font: inherit; }
+    button { cursor: pointer; }
+    .app { max-width: 1180px; margin: 0 auto; padding: 28px 22px 48px; }
+    .topbar { display: flex; justify-content: space-between; align-items: center; gap: 16px; margin-bottom: 28px; }
+    .brand { display: flex; align-items: center; gap: 12px; }
+    .brand-icon { width: 48px; height: 48px; display: grid; place-items: center; color: white; font-size: 23px; border-radius: 15px; background: linear-gradient(135deg, #8275ff, #5a4de0); box-shadow: 0 8px 18px #6558e83b; }
+    .brand h1 { margin: 0; font-size: 21px; letter-spacing: -.5px; }
+    .brand p { margin: 4px 0 0; color: var(--muted); font-size: 12px; }
+    .today-pill { background: white; border: 1px solid var(--line); border-radius: 12px; padding: 11px 14px; color: #515a70; font-size: 13px; font-weight: 650; }
+    .welcome { display: flex; justify-content: space-between; align-items: end; gap: 18px; margin-bottom: 22px; }
+    .welcome h2 { font-size: clamp(25px, 4vw, 34px); margin: 0 0 7px; letter-spacing: -1px; }
+    .welcome p { margin: 0; color: var(--muted); font-size: 14px; }
+    .welcome strong { color: var(--primary); }
+    .quote { background: var(--soft); color: #5549c7; padding: 12px 15px; border-radius: 13px; font-size: 12px; max-width: 275px; line-height: 1.5; }
+    .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; margin-bottom: 22px; }
+    .stat { background: var(--panel); border: 1px solid var(--line); border-radius: 17px; padding: 19px; box-shadow: 0 4px 18px #20264b05; }
+    .stat-top { display: flex; justify-content: space-between; align-items: center; color: var(--muted); font-size: 12px; font-weight: 650; }
+    .stat-icon { width: 34px; height: 34px; display: grid; place-items: center; border-radius: 11px; background: var(--soft); font-size: 17px; }
+    .stat h3 { margin: 13px 0 4px; font-size: 27px; letter-spacing: -.7px; }
+    .stat small { color: var(--muted); font-size: 11px; }
+    .layout { display: grid; grid-template-columns: minmax(0, 1.55fr) minmax(290px, .85fr); gap: 20px; align-items: start; }
+    .panel { background: var(--panel); border: 1px solid var(--line); border-radius: 18px; padding: 22px; box-shadow: var(--shadow); margin-bottom: 20px; }
+    .panel-heading { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-bottom: 18px; }
+    .panel-heading h3 { margin: 0; font-size: 17px; letter-spacing: -.3px; }
+    .panel-heading p { color: var(--muted); font-size: 12px; margin: 5px 0 0; }
+    .text-button { border: 0; background: transparent; color: var(--primary); font-weight: 700; font-size: 12px; }
+    .task-form { display: grid; grid-template-columns: 1.4fr 1fr 1fr; gap: 10px; margin-bottom: 18px; }
+    .field { width: 100%; min-width: 0; border: 1px solid var(--line); background: #fbfcff; border-radius: 10px; padding: 11px 12px; color: var(--ink); outline: none; }
+    .field:focus { border-color: #a49cff; box-shadow: 0 0 0 3px #6558e817; }
+    .task-form .wide { grid-column: span 2; }
+    .primary-btn { border: 0; border-radius: 10px; padding: 11px 15px; background: var(--primary); color: white; font-weight: 700; transition: .2s; }
+    .primary-btn:hover { background: var(--primary-dark); transform: translateY(-1px); }
+    .task-form .primary-btn { width: 100%; }
+    .filters { display: flex; gap: 7px; flex-wrap: wrap; margin-bottom: 14px; }
+    .filter-btn { border: 1px solid var(--line); background: white; color: var(--muted); padding: 7px 12px; border-radius: 9px; font-size: 12px; font-weight: 650; }
+    .filter-btn.active { color: var(--primary); background: var(--soft); border-color: #d9d5ff; }
+    .task-list { display: grid; gap: 10px; }
+    .task { display: flex; align-items: center; gap: 12px; border: 1px solid var(--line); border-radius: 13px; padding: 13px; transition: .2s; }
+    .task:hover { border-color: #d4d0ff; }
+    .check { flex: 0 0 21px; width: 21px; height: 21px; border: 2px solid #d5d9e7; border-radius: 7px; display: grid; place-items: center; background: white; color: white; }
+    .task.done .check { background: var(--green); border-color: var(--green); }
+    .task.done .check::after { content: "✓"; font-size: 13px; font-weight: 800; }
+    .task-content { flex: 1; min-width: 0; }
+    .task-title { margin: 0 0 5px; font-size: 13px; font-weight: 750; overflow-wrap: anywhere; }
+    .task.done .task-title { text-decoration: line-through; color: #9aa1b1; }
+    .task-meta { display: flex; flex-wrap: wrap; gap: 7px; color: var(--muted); font-size: 11px; }
+    .tag { padding: 4px 7px; border-radius: 6px; background: #f0efff; color: #6255d8; font-weight: 700; }
+    .priority { color: #c67b20; background: #fff4e3; }
+    .delete-btn { border: 0; background: transparent; color: #a0a6b5; font-size: 18px; padding: 5px; }
+    .delete-btn:hover { color: #e05265; }
+    .empty { text-align: center; padding: 28px 12px; color: var(--muted); font-size: 13px; }
+    .empty span { display: block; font-size: 30px; margin-bottom: 8px; }
+    .progress-card { background: linear-gradient(135deg, #6558e8, #8175f4); color: white; border: 0; overflow: hidden; position: relative; }
+    .progress-card::after { content: ""; position: absolute; width: 145px; height: 145px; border-radius: 50%; border: 24px solid #ffffff13; right: -35px; top: -50px; }
+    .progress-card .panel-heading p { color: #e0ddff; }
+    .progress-number { display: flex; justify-content: space-between; align-items: end; margin: 22px 0 12px; }
+    .progress-number strong { font-size: 36px; letter-spacing: -1px; }
+    .progress-number span { font-size: 12px; color: #e5e2ff; }
+    .progress-track { height: 9px; border-radius: 20px; background: #ffffff35; overflow: hidden; }
+    .progress-fill { height: 100%; width: 0%; background: white; border-radius: inherit; transition: width .3s; }
+    .progress-note { margin: 13px 0 0; color: #e7e4ff; font-size: 12px; }
+    .focus-box { background: #fffaf2; border: 1px solid #ffedcf; border-radius: 14px; padding: 16px; }
+    .focus-box h4 { margin: 0 0 7px; font-size: 14px; }
+    .focus-box p { margin: 0; color: #8b7655; font-size: 12px; line-height: 1.6; }
+    .focus-row { display: flex; align-items: center; gap: 10px; margin-top: 13px; }
+    .focus-emoji { width: 37px; height: 37px; display: grid; place-items: center; background: #fff0d6; border-radius: 11px; font-size: 18px; }
+    .focus-row strong { display: block; font-size: 12px; }
+    .focus-row small { display: block; color: #8b7655; font-size: 11px; margin-top: 3px; }
+    .tips { display: grid; gap: 14px; }
+    .tip { display: flex; align-items: flex-start; gap: 11px; }
+    .tip-icon { flex: 0 0 34px; height: 34px; display: grid; place-items: center; background: #effaf5; border-radius: 10px; font-size: 16px; }
+    .tip strong { display: block; font-size: 12px; margin: 1px 0 4px; }
+    .tip p { margin: 0; color: var(--muted); font-size: 11px; line-height: 1.5; }
+    footer { text-align: center; color: #9ba2b2; font-size: 11px; padding-top: 7px; }
+    @media (max-width: 850px) { .stats { grid-template-columns: repeat(2, 1fr); } .layout { grid-template-columns: 1fr; } .welcome { align-items: start; flex-direction: column; } .quote { max-width: none; } }
+    @media (max-width: 520px) { .app { padding: 18px 13px 30px; } .topbar { align-items: flex-start; } .today-pill { font-size: 11px; padding: 9px; } .brand h1 { font-size: 17px; } .brand-icon { width: 42px; height: 42px; } .stats { gap: 10px; } .stat { padding: 14px; } .stat h3 { font-size: 23px; } .panel { padding: 16px; } .task-form { grid-template-columns: 1fr 1fr; } .task-form .wide { grid-column: span 2; } .task-form .primary-btn { grid-column: span 2; } }
+  </style>
+</head>
+<body>
+  <main class="app">
+    <header class="topbar">
+      <div class="brand">
+        <div class="brand-icon">✦</div>
+        <div><h1>StudyFlow</h1><p>YOUR SMART STUDY PLANNER</p></div>
+      </div>
+      <div class="today-pill" id="todayLabel">📅 Today</div>
+    </header>
+
+    <section class="welcome">
+      <div>
+        <h2>Make today count<span style="color:var(--primary)">.</span></h2>
+        <p>A little progress every day adds up to <strong>big results.</strong></p>
+      </div>
+      <div class="quote">💡 <strong>Study tip:</strong> Focus for 25 minutes, then take a 5-minute break. Repeat!</div>
+    </section>
+
+    <section class="stats" aria-label="Study statistics">
+      <article class="stat"><div class="stat-top">Total tasks <span class="stat-icon">📚</span></div><h3 id="totalTasks">0</h3><small>Tasks in your planner</small></article>
+      <article class="stat"><div class="stat-top">Completed <span class="stat-icon">✅</span></div><h3 id="completedTasks">0</h3><small>Tasks you've finished</small></article>
+      <article class="stat"><div class="stat-top">Study hours <span class="stat-icon">⏱️</span></div><h3 id="studyHours">0h</h3><small>Planned study time</small></article>
+      <article class="stat"><div class="stat-top">Remaining <span class="stat-icon">🎯</span></div><h3 id="remainingTasks">0</h3><small>Tasks still to do</small></article>
+    </section>
+
+    <div class="layout">
+      <section class="panel">
+        <div class="panel-heading">
+          <div><h3>📋 My study tasks</h3><p>Plan your next step and keep moving forward.</p></div>
+          <button class="text-button" id="clearCompleted">Clear completed</button>
+        </div>
+        <form class="task-form" id="taskForm">
+          <input class="field wide" id="taskTitle" type="text" placeholder="What do you need to study?" maxlength="100" required />
+          <select class="field" id="subject" aria-label="Subject">
+            <option value="Mathematics">Mathematics</option><option value="Science">Science</option><option value="English">English</option><option value="Computer">Computer</option><option value="Urdu">Urdu</option><option value="Other">Other</option>
+          </select>
+          <input class="field" id="taskDate" type="date" aria-label="Due date" required />
+          <select class="field" id="duration" aria-label="Duration">
+            <option value="15">15 minutes</option><option value="25" selected>25 minutes</option><option value="30">30 minutes</option><option value="45">45 minutes</option><option value="60">60 minutes</option><option value="90">90 minutes</option>
+          </select>
+          <select class="field" id="priority" aria-label="Priority">
+            <option value="Normal">Normal priority</option><option value="High">High priority</option>
+          </select>
+          <button class="primary-btn" type="submit">＋ Add task</button>
+        </form>
+        <div class="filters" role="group" aria-label="Filter tasks">
+          <button class="filter-btn active" data-filter="all">All tasks</button>
+          <button class="filter-btn" data-filter="pending">To do</button>
+          <button class="filter-btn" data-filter="done">Completed</button>
+        </div>
+        <div class="task-list" id="taskList"></div>
+      </section>
+
+      <aside>
+        <section class="panel progress-card">
+          <div class="panel-heading"><div><h3>Today's progress</h3><p>Every task is a step forward.</p></div><span style="font-size:23px">🏆</span></div>
+          <div class="progress-number"><strong id="progressPercent">0%</strong><span id="progressCount">0 of 0 tasks</span></div>
+          <div class="progress-track"><div class="progress-fill" id="progressFill"></div></div>
+          <p class="progress-note" id="progressMessage">Add a task to start your progress!</p>
+        </section>
+
+        <section class="panel">
+          <div class="panel-heading"><div><h3>✨ Smart study tip</h3><p>Small habits, better learning.</p></div></div>
+          <div class="focus-box">
+            <h4>Try the Pomodoro method</h4>
+            <p>Study with full focus for 25 minutes, then step away for a 5-minute break. After four rounds, take a longer break.</p>
+            <div class="focus-row"><div class="focus-emoji">⏳</div><div><strong>25 min focus</strong><small>One task at a time</small></div></div>
+          </div>
+        </section>
+
+        <section class="panel">
+          <div class="panel-heading"><div><h3>🌱 Good study habits</h3><p>Make your sessions count.</p></div></div>
+          <div class="tips">
+            <div class="tip"><div class="tip-icon">📵</div><div><strong>Remove distractions</strong><p>Keep your phone away while you focus.</p></div></div>
+            <div class="tip"><div class="tip-icon">💧</div><div><strong>Take short breaks</strong><p>Drink water and stretch between sessions.</p></div></div>
+            <div class="tip"><div class="tip-icon">🔁</div><div><strong>Review regularly</strong><p>Revisit your notes to strengthen memory.</p></div></div>
+          </div>
+        </section>
+      </aside>
+    </div>
+    <footer>Your planner saves tasks in this browser using local storage. Keep learning, one step at a time. 💜</footer>
+  </main>
+
+  <script>
+    const $ = (id) => document.getElementById(id);
+    const STORAGE_KEY = "studyflow_tasks_v1";
+    let tasks = [];
+    let activeFilter = "all";
+
+    try {
+      const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]");
+      tasks = Array.isArray(saved) ? saved : [];
+    } catch (_) { tasks = []; }
+
+    const now = new Date();
+    const localDate = (date) => {
+      const y = date.getFullYear();
+      const m = String(date.getMonth() + 1).padStart(2, "0");
+      const d = String(date.getDate()).padStart(2, "0");
+      return `${y}-${m}-${d}`;
+    };
+    $("todayLabel").textContent = "📅 " + now.toLocaleDateString(undefined, { weekday: "short", month: "short", day: "numeric", year: "numeric" });
+    $("taskDate").value = localDate(now);
+
+    function save() {
+      try { localStorage.setItem(STORAGE_KEY, JSON.stringify(tasks)); } catch (_) {}
+    }
+    function escapeHTML(value) {
+      return String(value).replace(/[&<>"']/g, ch => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[ch]));
+    }
+    function prettyDate(value) {
+      if (!value) return "No date";
+      const date = new Date(value + "T12:00:00");
+      return date.toLocaleDateString(undefined, { month: "short", day: "numeric" });
+    }
+    function render() {
+      const completed = tasks.filter(t => t.done).length;
+      const remaining = tasks.length - completed;
+      const minutes = tasks.reduce((sum, t) => sum + (Number(t.duration) || 0), 0);
+      $("totalTasks").textContent = tasks.length;
+      $("completedTasks").textContent = completed;
+      $("remainingTasks").textContent = remaining;
+      $("studyHours").textContent = (minutes / 60).toLocaleString(undefined, { maximumFractionDigits: 1 }) + "h";
+      const percent = tasks.length ? Math.round(completed / tasks.length * 100) : 0;
+      $("progressPercent").textContent = percent + "%";
+      $("progressCount").textContent = `${completed} of ${tasks.length} tasks`;
+      $("progressFill").style.width = percent + "%";
+      $("progressMessage").textContent = !tasks.length ? "Add a task to start your progress!" : percent === 100 ? "Amazing work — you've completed everything! 🎉" : "Keep going! You're building a great habit.";
+
+      const shown = tasks.filter(t => activeFilter === "all" || (activeFilter === "done" ? t.done : !t.done));
+      const list = $("taskList");
+      if (!shown.length) {
+        list.innerHTML = `<div class="empty"><span>${activeFilter === "done" ? "🌟" : "📝"}</span>${activeFilter === "done" ? "No completed tasks yet. You've got this!" : activeFilter === "pending" ? "You're all caught up. Add a task when you're ready!" : "No tasks yet. Add your first study task above."}</div>`;
+        return;
+      }
+      list.innerHTML = shown.map(task => `
+        <article class="task ${task.done ? "done" : ""}">
+          <button class="check" data-action="toggle" data-id="${task.id}" aria-label="${task.done ? "Mark incomplete" : "Mark complete"}"></button>
+          <div class="task-content">
+            <p class="task-title">${escapeHTML(task.title)}</p>
+            <div class="task-meta">
+              <span class="tag">${escapeHTML(task.subject)}</span>
+              <span>📅 ${prettyDate(task.date)}</span>
+              <span>⏱ ${Number(task.duration)} min</span>
+              ${task.priority === "High" ? '<span class="tag priority">High priority</span>' : ""}
+            </div>
+          </div>
+          <button class="delete-btn" data-action="delete" data-id="${task.id}" aria-label="Delete task" title="Delete task">×</button>
+        </article>`).join("");
+    }
+
+    $("taskForm").addEventListener("submit", (event) => {
+      event.preventDefault();
+      const title = $("taskTitle").value.trim();
+      if (!title) return;
+      tasks.unshift({
+        id: (window.crypto && crypto.randomUUID) ? crypto.randomUUID() : String(Date.now() + Math.random()),
+        title,
+        subject: $("subject").value,
+        date: $("taskDate").value || localDate(new Date()),
+        duration: Number($("duration").value),
+        priority: $("priority").value,
+        done: false
+      });
+      save();
+      render();
+      $("taskTitle").value = "";
+      $("taskTitle").focus();
+    });
+
+    $("taskList").addEventListener("click", (event) => {
+      const button = event.target.closest("button[data-action]");
+      if (!button) return;
+      const id = button.dataset.id;
+      if (button.dataset.action === "toggle") {
+        tasks = tasks.map(t => t.id === id ? { ...t, done: !t.done } : t);
+      } else if (button.dataset.action === "delete") {
+        tasks = tasks.filter(t => t.id !== id);
+      }
+      save();
+      render();
+    });
+
+    document.querySelectorAll(".filter-btn").forEach(button => {
+      button.addEventListener("click", () => {
+        activeFilter = button.dataset.filter;
+        document.querySelectorAll(".filter-btn").forEach(b => b.classList.toggle("active", b === button));
+        render();
+      });
+    });
+
+    $("clearCompleted").addEventListener("click", () => {
+      tasks = tasks.filter(t => !t.done);
+      save();
+      render();
+    });
+
+    render();
+  </script>
+</body>
+</html>
